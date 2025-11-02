@@ -10,9 +10,10 @@ interface DashboardProps {
   profile: FarmerProfile;
   onProfileClear: () => void;
   onNavigate: (page: Page) => void;
+  isApiKeyMissing: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNavigate, isApiKeyMissing }) => {
   
   const NavButton = ({ page, icon, label }: { page: Page, icon: React.ReactNode, label: string }) => (
       <button 
@@ -48,7 +49,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNaviga
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 overflow-y-hidden">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 overflow-hidden">
         <div className="lg:col-span-1 p-4 bg-gray-50 dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 overflow-y-auto space-y-6">
           
            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg shadow">
@@ -70,12 +71,12 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNaviga
              <NavButton page="schemes" icon={<MegaphoneIcon className="h-6 w-6 text-yellow-500"/>} label="Govt. Schemes" />
           </div>
 
-          <AlertsWidget profile={profile} />
+          <AlertsWidget profile={profile} isApiKeyMissing={isApiKeyMissing} />
 
         </div>
         
-        <div className="lg:col-span-2 flex flex-col h-full min-h-0">
-          <ChatInterface profile={profile} />
+        <div className="lg:col-span-2 flex flex-col h-full">
+          <ChatInterface profile={profile} isApiKeyMissing={isApiKeyMissing} />
         </div>
       </main>
     </div>

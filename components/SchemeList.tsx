@@ -6,9 +6,10 @@ import { CalendarIcon } from './icons/Icons';
 
 interface SchemeListProps {
   profile: FarmerProfile;
+  isApiKeyMissing: boolean;
 }
 
-const SchemeList: React.FC<SchemeListProps> = ({ profile }) => {
+const SchemeList: React.FC<SchemeListProps> = ({ profile, isApiKeyMissing }) => {
   const [schemes, setSchemes] = useState<SchemeReminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +19,11 @@ const SchemeList: React.FC<SchemeListProps> = ({ profile }) => {
       try {
         setLoading(true);
         setError(null);
+        if (isApiKeyMissing) {
+            setError("Functionality unavailable: AI service not configured by the administrator.");
+            setLoading(false);
+            return;
+        }
         const schemesString = await getSchemeReminders(profile);
         const schemesData = JSON.parse(schemesString);
         if (schemesData.error) {
@@ -34,7 +40,7 @@ const SchemeList: React.FC<SchemeListProps> = ({ profile }) => {
     };
 
     fetchSchemes();
-  }, [profile]);
+  }, [profile, isApiKeyMissing]);
 
   if (loading) {
     return <div className="text-center p-8 text-gray-600 dark:text-gray-300">Finding relevant schemes for you...</div>;

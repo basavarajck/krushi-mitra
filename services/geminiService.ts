@@ -1,45 +1,21 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { FarmerProfile, ChatMessage, ActivityLog } from '../types';
 
+// Lazily initialize to avoid crashing on load if API key is missing.
 let ai: GoogleGenAI | null = null;
-let initialized = false;
-
-// Safely initialize the AI client once.
-const getAiClient = (): GoogleGenAI | null => {
-    if (initialized) {
-        return ai;
-    }
-    initialized = true;
-    const apiKey = process.env.API_KEY;
+const getAi = () => {
+  if (!ai) {
+    const apiKey = import.meta.env.VITE_API_KEY;
     if (!apiKey) {
-        console.warn("API_KEY is not set. AI services will be disabled.");
-        ai = null;
-        return null;
+      console.error("VITE_API_KEY environment variable not set. Please add it to your .env file.");
+      return null;
     }
-    try {
-        ai = new GoogleGenAI({ apiKey });
-        return ai;
-    } catch (error) {
-        console.error("Failed to initialize GoogleGenAI:", error);
-        ai = null;
-        return null;
-    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
 };
 
-const handleApiError = (error: unknown, functionName: string): string => {
-    console.error(`Error in ${functionName}:`, error);
-    return "Sorry, I'm having trouble connecting to the AI service. Please check your connection and try again.";
-};
-
-const handleJsonApiError = (error: unknown, functionName: string, defaultMessage: string): string => {
-    console.error(`Error in ${functionName}:`, error);
-    return JSON.stringify({ error: defaultMessage });
-};
-
-const getMissingApiKeyMessage = (isJson: boolean): string => {
-    const message = "The AI service is not configured. Please ensure your API key is set up correctly by the administrator.";
-    return isJson ? JSON.stringify({ error: message }) : message;
-};
 
 function fileToGenerativePart(base64: string, mimeType: string) {
   return {
@@ -79,33 +55,37 @@ Be a supportive, proactive, and empowering partner to the farmer.
 `;
 };
 
+const API_KEY_ERROR_MESSAGE = "Functionality unavailable. The application administrator must configure an API key in the environment settings.";
+const API_KEY_ERROR_JSON = (message: string) => JSON.stringify({ error: message });
+
+
 export const generateChatResponse = async (
   profile: FarmerProfile,
   history: ChatMessage[],
   newMessage: string,
   image?: { base64: string, mimeType: string }
 ): Promise<string> => {
-  const aiClient = getAiClient();
-  if (!aiClient) return getMissingApiKeyMessage(false);
-    
-  try {
-    const modelName = image ? 'gemini-2.5-flash-image' : 'gemini-2.5-flash';
-    
-    const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
-    const systemInstruction = buildSystemInstruction(profile, activityLogs);
-    
-    const contents: { role: string; parts: ({ text: string; } | { inlineData: { data: string; mimeType: string; }; })[] }[] = history.map(msg => ({
-        role: msg.role === 'model' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
-    }));
-    
-    const userParts: ({ text: string } | { inlineData: { data: string; mimeType: string; } })[] = [{ text: newMessage }];
-    if (image) {
-        userParts.unshift(fileToGenerativePart(image.base64, image.mimeType));
-    }
-    contents.push({ role: 'user', parts: userParts });
+  const ai = getAi();
+  if (!ai) return API_KEY_ERROR_MESSAGE;
 
-    const response: GenerateContentResponse = await aiClient.models.generateContent({
+  const modelName = image ? 'gemini-2.5-flash-image' : 'gemini-2.5-flash';
+  
+  const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+  const systemInstruction = buildSystemInstruction(profile, activityLogs);
+  
+  const contents: { role: string; parts: ({ text: string; } | { inlineData: { data: string; mimeType: string; }; })[] }[] = history.map(msg => ({
+      role: msg.role === 'model' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+  }));
+  
+  const userParts: ({ text: string } | { inlineData: { data: string; mimeType: string; } })[] = [{ text: newMessage }];
+  if (image) {
+      userParts.unshift(fileToGenerativePart(image.base64, image.mimeType));
+  }
+  contents.push({ role: 'user', parts: userParts });
+
+  try {
+    const response: GenerateContentResponse = await ai.models.generateContent({
         model: modelName,
         contents: contents,
         config: {
@@ -116,17 +96,18 @@ export const generateChatResponse = async (
     });
     return response.text;
   } catch (error) {
-    return handleApiError(error, "generateChatResponse");
+    console.error("Error generating response from Gemini:", error);
+    return "Sorry, I'm having trouble connecting to the AI service. Please check your connection or API key and try again.";
   }
 };
 
 
 export const getWeatherForecast = async (location: string): Promise<string> => {
-    const aiClient = getAiClient();
-    if (!aiClient) return getMissingApiKeyMessage(true);
+    const ai = getAi();
+    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
 
     try {
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Get the 5-day weather forecast for ${location}.`,
             config: {
@@ -156,13 +137,14 @@ export const getWeatherForecast = async (location: string): Promise<string> => {
         });
         return response.text;
     } catch (error) {
-        return handleJsonApiError(error, "getWeatherForecast", "Could not fetch weather data.");
+        console.error("Error fetching weather forecast:", error);
+        return JSON.stringify({ error: "Could not fetch weather data." });
     }
 };
 
 export const getPriceTrends = async (crop: string, location: string): Promise<string> => {
-    const aiClient = getAiClient();
-    if (!aiClient) return getMissingApiKeyMessage(true);
+    const ai = getAi();
+    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
 
     try {
         const today = new Date();
@@ -178,7 +160,7 @@ export const getPriceTrends = async (crop: string, location: string): Promise<st
         - Write a brief, one-paragraph summary of the trend and your prediction.
         `;
 
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -223,13 +205,14 @@ export const getPriceTrends = async (crop: string, location: string): Promise<st
         });
         return response.text;
     } catch (error) {
-        return handleJsonApiError(error, "getPriceTrends", "Could not fetch price trend data.");
+        console.error("Error fetching price trends:", error);
+        return JSON.stringify({ error: "Could not fetch price trend data." });
     }
 };
 
 export const getSchemeReminders = async (profile: FarmerProfile): Promise<string> => {
-    const aiClient = getAiClient();
-    if (!aiClient) return getMissingApiKeyMessage(true);
+    const ai = getAi();
+    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
 
     try {
         const prompt = `
@@ -242,7 +225,7 @@ export const getSchemeReminders = async (profile: FarmerProfile): Promise<string
         Provide key details for each scheme: a brief description, general eligibility criteria, an upcoming application deadline (within the next 30-90 days), and a placeholder application link.
         `;
 
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -265,14 +248,15 @@ export const getSchemeReminders = async (profile: FarmerProfile): Promise<string
         });
         return response.text;
     } catch (error) {
-        return handleJsonApiError(error, "getSchemeReminders", "Could not fetch scheme reminders.");
+        console.error("Error fetching scheme reminders:", error);
+        return JSON.stringify({ error: "Could not fetch scheme reminders." });
     }
 };
 
 
 export const getSmartAlerts = async (profile: FarmerProfile, activityLogs: ActivityLog[]): Promise<string> => {
-    const aiClient = getAiClient();
-    if (!aiClient) return getMissingApiKeyMessage(true);
+    const ai = getAi();
+    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
 
     try {
         const recentActivities = activityLogs.slice(-5).map(log => `- On ${log.date}, action: ${log.activityType}, notes: ${log.notes}`).join('\n');
@@ -301,7 +285,7 @@ export const getSmartAlerts = async (profile: FarmerProfile, activityLogs: Activ
         - Priority: "High"
         `;
 
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -324,6 +308,7 @@ export const getSmartAlerts = async (profile: FarmerProfile, activityLogs: Activ
         });
         return response.text;
     } catch (error) {
-        return handleJsonApiError(error, "getSmartAlerts", "Could not fetch smart alerts.");
+        console.error("Error fetching smart alerts:", error);
+        return JSON.stringify({ error: "Could not fetch smart alerts." });
     }
 };
