@@ -197,7 +197,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
-                placeholder={isApiKeyMissing ? "AI service unavailable" : (isListening ? 'Listening...' : "Type your message or upload an image...")}
+                placeholder={isApiKeyMissing ? "Chat unavailable: AI service not configured." : (isListening ? 'Listening...' : "Type your message or upload an image...")}
                 className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 pr-24 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || isApiKeyMissing}
             />

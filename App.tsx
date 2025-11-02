@@ -87,7 +87,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
        {isApiKeyMissing && (
         <div className="bg-red-600 text-white text-center p-2 font-semibold shadow-lg" role="alert">
-            Warning: AI service is not configured. An API key is required for full functionality.
+            Warning: The AI service is not configured. The application administrator must add an API key in the deployment settings.
         </div>
       )}
       {renderPage()}

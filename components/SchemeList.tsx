@@ -20,7 +20,7 @@ const SchemeList: React.FC<SchemeListProps> = ({ profile, isApiKeyMissing }) => 
         setLoading(true);
         setError(null);
         if (isApiKeyMissing) {
-            setError("AI service not configured.");
+            setError("Functionality unavailable: AI service not configured by the administrator.");
             setLoading(false);
             return;
         }

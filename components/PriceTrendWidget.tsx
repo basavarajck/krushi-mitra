@@ -24,7 +24,7 @@ const PriceTrendWidget: React.FC<PriceTrendWidgetProps> = ({ profile, isApiKeyMi
         setLoading(true);
         setError(null);
         if (isApiKeyMissing) {
-          setError("AI service not configured.");
+          setError("Functionality unavailable: AI service not configured by the administrator.");
           setLoading(false);
           return;
         }
