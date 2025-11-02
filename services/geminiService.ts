@@ -2,18 +2,44 @@ import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { FarmerProfile, ChatMessage, ActivityLog } from '../types';
 
 let ai: GoogleGenAI | null = null;
+let initialized = false;
 
-const getAiClient = (): GoogleGenAI => {
-    if (ai) return ai;
-
+// Safely initialize the AI client once.
+const getAiClient = (): GoogleGenAI | null => {
+    if (initialized) {
+        return ai;
+    }
+    initialized = true;
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        throw new Error("API_KEY_MISSING");
+        console.warn("API_KEY is not set. AI services will be disabled.");
+        ai = null;
+        return null;
     }
-    ai = new GoogleGenAI({ apiKey });
-    return ai;
+    try {
+        ai = new GoogleGenAI({ apiKey });
+        return ai;
+    } catch (error) {
+        console.error("Failed to initialize GoogleGenAI:", error);
+        ai = null;
+        return null;
+    }
 };
 
+const handleApiError = (error: unknown, functionName: string): string => {
+    console.error(`Error in ${functionName}:`, error);
+    return "Sorry, I'm having trouble connecting to the AI service. Please check your connection and try again.";
+};
+
+const handleJsonApiError = (error: unknown, functionName: string, defaultMessage: string): string => {
+    console.error(`Error in ${functionName}:`, error);
+    return JSON.stringify({ error: defaultMessage });
+};
+
+const getMissingApiKeyMessage = (isJson: boolean): string => {
+    const message = "The AI service is not configured. Please ensure your API key is set up correctly by the administrator.";
+    return isJson ? JSON.stringify({ error: message }) : message;
+};
 
 function fileToGenerativePart(base64: string, mimeType: string) {
   return {
@@ -53,30 +79,16 @@ Be a supportive, proactive, and empowering partner to the farmer.
 `;
 };
 
-const handleApiError = (error: unknown, functionName: string): string => {
-    console.error(`Error in ${functionName}:`, error);
-    if (error instanceof Error && error.message === "API_KEY_MISSING") {
-        return "The AI service is not configured. Please ensure your API key is set up correctly by the administrator.";
-    }
-    return "Sorry, I'm having trouble connecting to the AI service. Please check your connection or API key and try again.";
-};
-
-const handleJsonApiError = (error: unknown, functionName: string, defaultMessage: string): string => {
-    console.error(`Error in ${functionName}:`, error);
-     if (error instanceof Error && error.message === "API_KEY_MISSING") {
-        return JSON.stringify({ error: "The AI service is not configured. Please ensure your API key is set up correctly by the administrator." });
-    }
-    return JSON.stringify({ error: defaultMessage });
-};
-
 export const generateChatResponse = async (
   profile: FarmerProfile,
   history: ChatMessage[],
   newMessage: string,
   image?: { base64: string, mimeType: string }
 ): Promise<string> => {
+  const aiClient = getAiClient();
+  if (!aiClient) return getMissingApiKeyMessage(false);
+    
   try {
-    const aiClient = getAiClient();
     const modelName = image ? 'gemini-2.5-flash-image' : 'gemini-2.5-flash';
     
     const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
@@ -110,8 +122,10 @@ export const generateChatResponse = async (
 
 
 export const getWeatherForecast = async (location: string): Promise<string> => {
+    const aiClient = getAiClient();
+    if (!aiClient) return getMissingApiKeyMessage(true);
+
     try {
-        const aiClient = getAiClient();
         const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Get the 5-day weather forecast for ${location}.`,
@@ -147,8 +161,10 @@ export const getWeatherForecast = async (location: string): Promise<string> => {
 };
 
 export const getPriceTrends = async (crop: string, location: string): Promise<string> => {
+    const aiClient = getAiClient();
+    if (!aiClient) return getMissingApiKeyMessage(true);
+
     try {
-        const aiClient = getAiClient();
         const today = new Date();
         const pastDate = new Date();
         pastDate.setDate(today.getDate() - 30);
@@ -212,8 +228,10 @@ export const getPriceTrends = async (crop: string, location: string): Promise<st
 };
 
 export const getSchemeReminders = async (profile: FarmerProfile): Promise<string> => {
+    const aiClient = getAiClient();
+    if (!aiClient) return getMissingApiKeyMessage(true);
+
     try {
-        const aiClient = getAiClient();
         const prompt = `
         Based on the following farmer's profile, generate a list of 2-3 relevant (but simulated) Indian government agricultural schemes.
         - Location: ${profile.location}
@@ -253,8 +271,10 @@ export const getSchemeReminders = async (profile: FarmerProfile): Promise<string
 
 
 export const getSmartAlerts = async (profile: FarmerProfile, activityLogs: ActivityLog[]): Promise<string> => {
+    const aiClient = getAiClient();
+    if (!aiClient) return getMissingApiKeyMessage(true);
+
     try {
-        const aiClient = getAiClient();
         const recentActivities = activityLogs.slice(-5).map(log => `- On ${log.date}, action: ${log.activityType}, notes: ${log.notes}`).join('\n');
         const prompt = `
         You are an AI agricultural expert. Your task is to generate 3-4 smart, proactive alerts for a farmer based on their profile, recent activities, and simulated real-time data (weather, pests, market).
