@@ -15,8 +15,16 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<FarmerProfileType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
 
   useEffect(() => {
+    // Check for API Key once on startup
+    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+    if (!apiKey) {
+      console.error("CRITICAL: API_KEY environment variable not set. AI features will be disabled.");
+      setIsApiKeyMissing(true);
+    }
+
     try {
       const savedProfile = localStorage.getItem('farmerProfile');
       if (savedProfile) {
@@ -52,18 +60,18 @@ const App: React.FC = () => {
     
     switch (currentPage) {
       case 'weather':
-        return <WeatherPage profile={profile} onNavigate={handleNavigate} />;
+        return <WeatherPage profile={profile} onNavigate={handleNavigate} isApiKeyMissing={isApiKeyMissing} />;
       case 'price-trends':
-        return <PriceTrendsPage profile={profile} onNavigate={handleNavigate} />;
+        return <PriceTrendsPage profile={profile} onNavigate={handleNavigate} isApiKeyMissing={isApiKeyMissing} />;
       case 'schemes':
-        return <SchemesPage profile={profile} onNavigate={handleNavigate} />;
+        return <SchemesPage profile={profile} onNavigate={handleNavigate} isApiKeyMissing={isApiKeyMissing} />;
       case 'activity-log':
         return <ActivityLogPage profile={profile} onNavigate={handleNavigate} />;
       case 'alerts':
-        return <AlertsPage profile={profile} onNavigate={handleNavigate} />;
+        return <AlertsPage profile={profile} onNavigate={handleNavigate} isApiKeyMissing={isApiKeyMissing} />;
       case 'dashboard':
       default:
-        return <Dashboard profile={profile} onProfileClear={handleProfileClear} onNavigate={handleNavigate} />;
+        return <Dashboard profile={profile} onProfileClear={handleProfileClear} onNavigate={handleNavigate} isApiKeyMissing={isApiKeyMissing} />;
     }
   };
 
@@ -77,6 +85,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+       {isApiKeyMissing && (
+        <div className="bg-red-600 text-white text-center p-2 font-semibold shadow-lg" role="alert">
+            Warning: AI service is not configured. An API key is required for full functionality.
+        </div>
+      )}
       {renderPage()}
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { FarmerProfile, SmartAlert, ActivityLog } from '../types';
 import { Page } from '../App';
@@ -8,6 +9,7 @@ import { LeafIcon, ArrowLeftIcon, BellIcon } from '../components/icons/Icons';
 interface AlertsPageProps {
   profile: FarmerProfile;
   onNavigate: (page: Page) => void;
+  isApiKeyMissing: boolean;
 }
 
 const PriorityIndicator: React.FC<{ priority: SmartAlert['priority'], large?: boolean }> = ({ priority, large=false }) => {
@@ -24,7 +26,7 @@ const PriorityIndicator: React.FC<{ priority: SmartAlert['priority'], large?: bo
 };
 
 
-const AlertsPage: React.FC<AlertsPageProps> = ({ profile, onNavigate }) => {
+const AlertsPage: React.FC<AlertsPageProps> = ({ profile, onNavigate, isApiKeyMissing }) => {
   const [alerts, setAlerts] = useState<SmartAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +36,11 @@ const AlertsPage: React.FC<AlertsPageProps> = ({ profile, onNavigate }) => {
       try {
         setLoading(true);
         setError(null);
+         if (isApiKeyMissing) {
+            setError("AI service not configured. An API key is required.");
+            setLoading(false);
+            return;
+        }
         const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
         const alertsString = await getSmartAlerts(profile, activityLogs);
         const alertsData = JSON.parse(alertsString);
@@ -55,7 +62,7 @@ const AlertsPage: React.FC<AlertsPageProps> = ({ profile, onNavigate }) => {
       }
     };
     fetchAlerts();
-  }, [profile]);
+  }, [profile, isApiKeyMissing]);
 
 
   return (
