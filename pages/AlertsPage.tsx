@@ -37,7 +37,7 @@ const AlertsPage: React.FC<AlertsPageProps> = ({ profile, onNavigate, isApiKeyMi
         setLoading(true);
         setError(null);
          if (isApiKeyMissing) {
-            setError("AI service not configured. An API key is required.");
+            setError("Functionality unavailable: AI service not configured by the administrator.");
             setLoading(false);
             return;
         }

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { FarmerProfile, ChatMessage, ActivityLog } from '../types';
 
@@ -54,7 +55,7 @@ Be a supportive, proactive, and empowering partner to the farmer.
 `;
 };
 
-const API_KEY_ERROR_MESSAGE = "AI service is not configured. An API key is required.";
+const API_KEY_ERROR_MESSAGE = "Functionality unavailable. The application administrator must configure an API key in the environment settings.";
 const API_KEY_ERROR_JSON = (message: string) => JSON.stringify({ error: message });
 
 
