@@ -143,7 +143,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      {/* messages container: limit height and enable scrolling */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[60vh] scrollbar-thin scrollbar-thumb-green-400 scrollbar-track-gray-100">
         {messages.map((msg, index) => (
           <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'model' && <BotIcon className="h-8 w-8 text-green-500 flex-shrink-0 mt-1" />}
