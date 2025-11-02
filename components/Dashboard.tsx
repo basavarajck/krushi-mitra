@@ -48,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNaviga
         </div>
       </header>
 
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 overflow-hidden">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-1 p-4 bg-gray-50 dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 overflow-y-auto space-y-6">
           
            <div className="p-4 bg-white dark:bg-gray-700 rounded-lg shadow">
