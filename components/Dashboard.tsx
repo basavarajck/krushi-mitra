@@ -10,10 +10,9 @@ interface DashboardProps {
   profile: FarmerProfile;
   onProfileClear: () => void;
   onNavigate: (page: Page) => void;
-  isApiKeyMissing: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNavigate, isApiKeyMissing }) => {
+const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNavigate }) => {
   
   const NavButton = ({ page, icon, label }: { page: Page, icon: React.ReactNode, label: string }) => (
       <button 
@@ -71,12 +70,12 @@ const Dashboard: React.FC<DashboardProps> = ({ profile, onProfileClear, onNaviga
              <NavButton page="schemes" icon={<MegaphoneIcon className="h-6 w-6 text-yellow-500"/>} label="Govt. Schemes" />
           </div>
 
-          <AlertsWidget profile={profile} isApiKeyMissing={isApiKeyMissing} />
+          <AlertsWidget profile={profile} />
 
         </div>
         
-        <div className="lg:col-span-2 flex flex-col h-full">
-          <ChatInterface profile={profile} isApiKeyMissing={isApiKeyMissing} />
+        <div className="lg:col-span-2 flex flex-col h-full min-h-0">
+          <ChatInterface profile={profile} />
         </div>
       </main>
     </div>

@@ -1,21 +1,7 @@
-
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { FarmerProfile, ChatMessage, ActivityLog } from '../types';
 
-// Lazily initialize to avoid crashing on load if API key is missing.
-let ai: GoogleGenAI | null = null;
-const getAi = () => {
-  if (!ai) {
-    const apiKey = import.meta.env.VITE_API_KEY;
-    if (!apiKey) {
-      console.error("VITE_API_KEY environment variable not set. Please add it to your .env file.");
-      return null;
-    }
-    ai = new GoogleGenAI({ apiKey });
-  }
-  return ai;
-};
-
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 function fileToGenerativePart(base64: string, mimeType: string) {
   return {
@@ -55,19 +41,12 @@ Be a supportive, proactive, and empowering partner to the farmer.
 `;
 };
 
-const API_KEY_ERROR_MESSAGE = "Functionality unavailable. The application administrator must configure an API key in the environment settings.";
-const API_KEY_ERROR_JSON = (message: string) => JSON.stringify({ error: message });
-
-
 export const generateChatResponse = async (
   profile: FarmerProfile,
   history: ChatMessage[],
   newMessage: string,
   image?: { base64: string, mimeType: string }
 ): Promise<string> => {
-  const ai = getAi();
-  if (!ai) return API_KEY_ERROR_MESSAGE;
-
   const modelName = image ? 'gemini-2.5-flash-image' : 'gemini-2.5-flash';
   
   const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
@@ -103,9 +82,6 @@ export const generateChatResponse = async (
 
 
 export const getWeatherForecast = async (location: string): Promise<string> => {
-    const ai = getAi();
-    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
-
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -143,9 +119,6 @@ export const getWeatherForecast = async (location: string): Promise<string> => {
 };
 
 export const getPriceTrends = async (crop: string, location: string): Promise<string> => {
-    const ai = getAi();
-    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
-
     try {
         const today = new Date();
         const pastDate = new Date();
@@ -211,9 +184,6 @@ export const getPriceTrends = async (crop: string, location: string): Promise<st
 };
 
 export const getSchemeReminders = async (profile: FarmerProfile): Promise<string> => {
-    const ai = getAi();
-    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
-
     try {
         const prompt = `
         Based on the following farmer's profile, generate a list of 2-3 relevant (but simulated) Indian government agricultural schemes.
@@ -255,9 +225,6 @@ export const getSchemeReminders = async (profile: FarmerProfile): Promise<string
 
 
 export const getSmartAlerts = async (profile: FarmerProfile, activityLogs: ActivityLog[]): Promise<string> => {
-    const ai = getAi();
-    if (!ai) return API_KEY_ERROR_JSON(API_KEY_ERROR_MESSAGE);
-
     try {
         const recentActivities = activityLogs.slice(-5).map(log => `- On ${log.date}, action: ${log.activityType}, notes: ${log.notes}`).join('\n');
         const prompt = `

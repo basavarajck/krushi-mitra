@@ -6,7 +6,6 @@ import { SunIcon, CloudIcon, RainIcon } from './icons/Icons';
 
 interface WeatherWidgetProps {
   location: string;
-  isApiKeyMissing: boolean;
 }
 
 const WeatherIcon: React.FC<{ condition: string }> = ({ condition }) => {
@@ -20,7 +19,7 @@ const WeatherIcon: React.FC<{ condition: string }> = ({ condition }) => {
     return <SunIcon className="h-8 w-8 text-yellow-500" />;
 };
 
-const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, isApiKeyMissing }) => {
+const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location }) => {
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +29,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, isApiKeyMissing
       try {
         setLoading(true);
         setError(null);
-        if (isApiKeyMissing) {
-          setError("Functionality unavailable: AI service not configured by the administrator.");
-          setLoading(false);
-          return;
-        }
         const forecastString = await getWeatherForecast(location);
         const forecastData = JSON.parse(forecastString);
         if (forecastData.error) {
@@ -52,7 +46,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ location, isApiKeyMissing
 
     fetchWeather();
      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location, isApiKeyMissing]);
+  }, [location]);
 
   return (
     <div className="p-4 bg-white dark:bg-gray-700 rounded-lg shadow">

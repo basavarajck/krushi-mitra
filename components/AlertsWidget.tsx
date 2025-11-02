@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { getSmartAlerts } from '../services/geminiService';
 import { FarmerProfile, SmartAlert, ActivityLog } from '../types';
@@ -6,7 +5,6 @@ import { BellIcon } from './icons/Icons';
 
 interface AlertsWidgetProps {
   profile: FarmerProfile;
-  isApiKeyMissing: boolean;
 }
 
 const PriorityIndicator: React.FC<{ priority: SmartAlert['priority'] }> = ({ priority }) => {
@@ -18,7 +16,7 @@ const PriorityIndicator: React.FC<{ priority: SmartAlert['priority'] }> = ({ pri
   return <span className={`w-3 h-3 rounded-full ${priorityStyles[priority]}`}></span>;
 };
 
-const AlertsWidget: React.FC<AlertsWidgetProps> = ({ profile, isApiKeyMissing }) => {
+const AlertsWidget: React.FC<AlertsWidgetProps> = ({ profile }) => {
   const [alerts, setAlerts] = useState<SmartAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +26,6 @@ const AlertsWidget: React.FC<AlertsWidgetProps> = ({ profile, isApiKeyMissing })
       try {
         setLoading(true);
         setError(null);
-        if (isApiKeyMissing) {
-            setError("Functionality unavailable: AI service not configured by the administrator.");
-            setLoading(false);
-            return;
-        }
-
         const activityLogs: ActivityLog[] = JSON.parse(localStorage.getItem('activityLogs') || '[]');
         const alertsString = await getSmartAlerts(profile, activityLogs);
         const alertsData = JSON.parse(alertsString);
@@ -56,7 +48,7 @@ const AlertsWidget: React.FC<AlertsWidgetProps> = ({ profile, isApiKeyMissing })
       }
     };
     fetchAlerts();
-  }, [profile, isApiKeyMissing]);
+  }, [profile]);
 
   return (
     <div className="p-4 bg-white dark:bg-gray-700 rounded-lg shadow">

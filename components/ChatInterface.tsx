@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FarmerProfile, ChatMessage } from '../types';
 import { generateChatResponse } from '../services/geminiService';
@@ -6,10 +5,9 @@ import { SendIcon, UploadIcon, BotIcon, UserIcon, MicrophoneIcon } from './icons
 
 interface ChatInterfaceProps {
   profile: FarmerProfile;
-  isApiKeyMissing: boolean;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'model', content: `Namaste, ${profile.name}! I am your Krishi Mitra AI. How can I help you with your ${profile.mainCrop} crop today? Ask me about weather, pests, or market prices.` }
   ]);
@@ -21,14 +19,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
   const recognitionRef = useRef<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
   }, [messages, isLoading]);
 
   // Setup Web Speech API
@@ -96,7 +95,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
   };
 
   const handleSend = useCallback(async () => {
-    if (isApiKeyMissing || (!userInput.trim() && !image)) return;
+    if (!userInput.trim() && !image) return;
 
     const userMessageContent = userInput.trim();
     const userMessage: ChatMessage = { role: 'user', content: userMessageContent };
@@ -127,10 +126,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
     } finally {
         setIsLoading(false);
     }
-  }, [userInput, image, messages, profile, isApiKeyMissing]);
+  }, [userInput, image, messages, profile]);
   
   const handleQuickAction = (prompt: string) => {
-    if (isApiKeyMissing) return;
     setUserInput(prompt);
   };
   
@@ -143,7 +141,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.map((msg, index) => (
           <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'model' && <BotIcon className="h-8 w-8 text-green-500 flex-shrink-0 mt-1" />}
@@ -166,19 +164,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
             </div>
           </div>
         )}
-        <div ref={chatEndRef} />
       </div>
 
       <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        {!isApiKeyMissing && (
-          <div className="flex flex-wrap gap-2 mb-3">
-              {quickActions.map(action => (
-                  <button key={action} onClick={() => handleQuickAction(action)} className="px-3 py-1 text-sm bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
-                      {action}
-                  </button>
-              ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mb-3">
+            {quickActions.map(action => (
+                <button key={action} onClick={() => handleQuickAction(action)} className="px-3 py-1 text-sm bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
+                    {action}
+                </button>
+            ))}
+        </div>
         {image && (
           <div className="mb-2 flex items-center gap-2">
             <img src={image.preview} alt="Preview" className="h-16 w-16 object-cover rounded-md" />
@@ -187,8 +182,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
           </div>
         )}
         <div className="flex items-center gap-2">
-          <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" disabled={isApiKeyMissing} />
-          <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Upload Image" disabled={isApiKeyMissing}>
+          <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+          <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Upload Image">
             <UploadIcon className="h-6 w-6" />
           </button>
           <div className="flex-1 relative">
@@ -197,21 +192,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ profile, isApiKeyMissing 
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
-                placeholder={isApiKeyMissing ? "Chat unavailable: AI service not configured." : (isListening ? 'Listening...' : "Type your message or upload an image...")}
-                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 pr-24 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading || isApiKeyMissing}
+                placeholder={isListening ? 'Listening...' : "Type your message or upload an image..."}
+                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 pr-24"
+                disabled={isLoading}
             />
             <div className="absolute inset-y-0 right-0 flex items-center pr-2">
                 <div className="flex items-center bg-gray-200 dark:bg-gray-600 rounded-full p-0.5">
-                    <button onClick={() => setRecognitionLang('en-IN')} className={`px-2 py-0.5 text-xs rounded-full ${recognitionLang === 'en-IN' ? 'bg-green-500 text-white' : 'text-gray-600 dark:text-gray-300'}`} disabled={isApiKeyMissing}>EN</button>
-                    <button onClick={() => setRecognitionLang('kn-IN')} className={`px-2 py-0.5 text-xs rounded-full ${recognitionLang === 'kn-IN' ? 'bg-green-500 text-white' : 'text-gray-600 dark:text-gray-300'}`} disabled={isApiKeyMissing}>ಕ</button>
+                    <button onClick={() => setRecognitionLang('en-IN')} className={`px-2 py-0.5 text-xs rounded-full ${recognitionLang === 'en-IN' ? 'bg-green-500 text-white' : 'text-gray-600 dark:text-gray-300'}`}>EN</button>
+                    <button onClick={() => setRecognitionLang('kn-IN')} className={`px-2 py-0.5 text-xs rounded-full ${recognitionLang === 'kn-IN' ? 'bg-green-500 text-white' : 'text-gray-600 dark:text-gray-300'}`}>ಕ</button>
                 </div>
-                <button onClick={toggleListen} className={`p-2 ml-1 rounded-full ${isListening ? 'text-red-500 animate-pulse' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400'} disabled:opacity-50 disabled:cursor-not-allowed`} aria-label="Toggle Voice Input" disabled={isApiKeyMissing}>
+                <button onClick={toggleListen} className={`p-2 ml-1 rounded-full ${isListening ? 'text-red-500 animate-pulse' : 'text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400'}`} aria-label="Toggle Voice Input">
                     <MicrophoneIcon className="h-6 w-6" />
                 </button>
             </div>
           </div>
-          <button onClick={handleSend} disabled={isLoading || isApiKeyMissing || (!userInput.trim() && !image)} className="p-2 text-white bg-green-600 rounded-full hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed">
+          <button onClick={handleSend} disabled={isLoading || (!userInput.trim() && !image)} className="p-2 text-white bg-green-600 rounded-full hover:bg-green-700 disabled:bg-green-300 disabled:cursor-not-allowed">
             <SendIcon className="h-6 w-6" />
           </button>
         </div>

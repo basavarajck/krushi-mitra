@@ -8,10 +8,9 @@ declare const Chart: any;
 
 interface PriceTrendWidgetProps {
   profile: FarmerProfile;
-  isApiKeyMissing: boolean;
 }
 
-const PriceTrendWidget: React.FC<PriceTrendWidgetProps> = ({ profile, isApiKeyMissing }) => {
+const PriceTrendWidget: React.FC<PriceTrendWidgetProps> = ({ profile }) => {
   const [trends, setTrends] = useState<PriceTrendData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +22,6 @@ const PriceTrendWidget: React.FC<PriceTrendWidgetProps> = ({ profile, isApiKeyMi
       try {
         setLoading(true);
         setError(null);
-        if (isApiKeyMissing) {
-          setError("Functionality unavailable: AI service not configured by the administrator.");
-          setLoading(false);
-          return;
-        }
         const trendsString = await getPriceTrends(profile.mainCrop, profile.location);
         const trendsData = JSON.parse(trendsString);
         if (trendsData.error) {
@@ -45,7 +39,7 @@ const PriceTrendWidget: React.FC<PriceTrendWidgetProps> = ({ profile, isApiKeyMi
 
     fetchTrends();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.mainCrop, profile.location, isApiKeyMissing]);
+  }, [profile.mainCrop, profile.location]);
 
   useEffect(() => {
     if (chartRef.current && trends) {

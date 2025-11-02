@@ -9,10 +9,9 @@ import { LeafIcon, ArrowLeftIcon, ChartBarIcon } from '../components/icons/Icons
 interface PriceTrendsPageProps {
   profile: FarmerProfile;
   onNavigate: (page: Page) => void;
-  isApiKeyMissing: boolean;
 }
 
-const PriceTrendsPage: React.FC<PriceTrendsPageProps> = ({ profile, onNavigate, isApiKeyMissing }) => {
+const PriceTrendsPage: React.FC<PriceTrendsPageProps> = ({ profile, onNavigate }) => {
   return (
     <div className="flex flex-col h-screen max-h-screen font-sans">
       <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center z-10 border-b border-gray-200 dark:border-gray-700">
@@ -42,7 +41,7 @@ const PriceTrendsPage: React.FC<PriceTrendsPageProps> = ({ profile, onNavigate, 
             </p>
         </div>
         <div className="flex-1">
-             <PriceTrendWidget profile={profile} isApiKeyMissing={isApiKeyMissing} />
+             <PriceTrendWidget profile={profile} />
         </div>
       </main>
     </div>

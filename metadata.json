@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Krishi Mitra AI",
+  "name": "Krishi Mitra AI",
   "description": "An AI-powered agricultural assistant for Indian farmers. It provides personalized advice, weather forecasts, pest detection, and market trends through a conversational interface to help optimize farming practices and improve crop yield.",
   "requestFramePermissions": [
     "camera",

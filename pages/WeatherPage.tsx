@@ -9,10 +9,9 @@ import { LeafIcon, ArrowLeftIcon, CloudIcon } from '../components/icons/Icons';
 interface WeatherPageProps {
   profile: FarmerProfile;
   onNavigate: (page: Page) => void;
-  isApiKeyMissing: boolean;
 }
 
-const WeatherPage: React.FC<WeatherPageProps> = ({ profile, onNavigate, isApiKeyMissing }) => {
+const WeatherPage: React.FC<WeatherPageProps> = ({ profile, onNavigate }) => {
   return (
     <div className="flex flex-col h-screen max-h-screen font-sans">
       <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center z-10 border-b border-gray-200 dark:border-gray-700">
@@ -42,7 +41,7 @@ const WeatherPage: React.FC<WeatherPageProps> = ({ profile, onNavigate, isApiKey
             </p>
         </div>
         <div className="w-full max-w-2xl mx-auto">
-             <WeatherWidget location={profile.location} isApiKeyMissing={isApiKeyMissing} />
+             <WeatherWidget location={profile.location} />
         </div>
       </main>
     </div>
