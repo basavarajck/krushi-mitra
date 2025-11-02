@@ -5,9 +5,9 @@ import { FarmerProfile, ChatMessage, ActivityLog } from '../types';
 let ai: GoogleGenAI | null = null;
 const getAi = () => {
   if (!ai) {
-    const apiKey = process.env.API_KEY;
+    const apiKey = import.meta.env.VITE_API_KEY;
     if (!apiKey) {
-      console.error("API_KEY environment variable not set. For Vercel, you must add it to your project settings and ensure it's exposed to the client.");
+      console.error("VITE_API_KEY environment variable not set. Please add it to your .env file.");
       return null;
     }
     ai = new GoogleGenAI({ apiKey });
